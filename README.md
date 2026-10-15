@@ -31,7 +31,7 @@ Wygrana przy hałasie ≤45, porażka przy >60 (dokładnie 60 nadal pozwala gra�
 
 ## Computer Room
 
-W selektorze **Scenario** u góry wybierz Normal Lesson albo Computer Room. Zmiana scenariusza tworzy nowy losowy układ i zeruje ruchy, zaznaczenie, dialog oraz wynik. Reset i Try Again zachowują wybrany scenariusz i jego layout.
+W selektorze **Scenario** u góry wybierz jeden z czterech scenariuszy: Normal Lesson, Computer Room, Substitute Lesson lub Lesson Observation. Zmiana scenariusza tworzy nowy losowy układ i zeruje ruchy, zaznaczenie, dialog oraz wynik. Reset i Try Again zachowują wybrany scenariusz i jego layout.
 
 Computer Room korzysta z tej samej listy 16 uczniów, ale z innej sali: **8 komputerów po 2 miejsca**, ustawionych w U otwarte ku nauczycielowi (2 stanowiska po lewej, 2 po prawej, 4 na dole). Każdy uczeń ma osobny klikalny Seat. Wszyscy siedzą twarzą do monitora: Left / Right / Down. Normal Lesson zachowuje grid 4 × 4 i orientację Up.
 
@@ -49,7 +49,15 @@ Każda para w `pairs` ma osobno `neighbourNoise` i `workstationNoise` oraz ich s
 
 Wspólny `Classroom.tsx` renderuje pozycje i graf z danych. Nie ma osobnego stanu ani kalkulatora dla Computer Room. Późniejsze assety komputerów podmienimy w `src/components/ComputerWorkstation.tsx` i odpowiadających mu stylach w `src/styles/game.css`; współrzędne, miejsca i reguły pozostaną niezależne od grafiki.
 
-Konfiguracja pozwala później zdefiniować Substitute Lesson i Lesson Observation przez własne relacje, progi, koszt podpowiedzi i oceny. Te scenariusze nie są jeszcze zaimplementowane.
+## Substitute Lesson i Lesson Observation
+
+Oba levele korzystają ze standardowej sali 4 × 4 i wspólnego rosteru 16 uczniów. Substitute Lesson: target 48, lose >65, hint 1 ruch. Joker, ToughGuy i Troublemaker otrzymują +1 do bazowego hałasu; `positivePairModifier: 1` zwiększa każdą istniejącą dodatnią relację sąsiedzką o 1, raz na parę. Ujemne i zerowe relacje pozostają bez zmian. Analysis, Legend, szczegóły ucznia, linie i Hint korzystają z tych samych efektywnych wartości, bez mutowania globalnych archetypów.
+
+Lesson Observation: target 40, lose >55, hint 2 ruchy. Bazowy hałas i relacje pozostają standardowe. Oceny za ruchy: 0–3 Masterclass, 4–6 Excellent, 7–9 Good, 10–12 Acceptable, 13–16 Barely survived, 17+ Total teacher exhaustion.
+
+Balans wszystkich scenariuszy edytuj w `src/game/levels.ts`: `targetNoise`, `loseNoise`, `hintCost` (koszt w ruchach), `ratings` (progi ocen z górną granicą włącznie), `baseNoiseModifiers`, `positivePairModifier` oraz reguły relacji. `getRating` odczytuje `level.ratings`; EndScreen nie definiuje progów. Normal Lesson, Computer Room i Substitute Lesson zachowują standardowe granice 4/8/12/16/22/Infinity.
+
+Nowy scenariusz oparty na istniejących mechanikach wymaga własnego LevelDefinition i wpisu w LEVELS. Selektor automatycznie pokazuje nazwę i numer 01 / 04 … 04 / 04, a przełączenie montuje nową grę z wybraną konfiguracją. Nie trzeba kopiować komponentów ani logiki. Nowe rodzaje mechaniki mogą wymagać rozszerzenia wspólnego modelu i testów.
 
 ## Struktura plików
 
@@ -61,6 +69,7 @@ src/
     ComputerWorkstation.tsx  # placeholder biurka, monitora i klawiatury
     Seat.tsx                 # klikane miejsce
     Student.tsx              # znacznik ucznia
+    LevelSelect.tsx          # selektor i numeracja z LEVELS
     HUD.tsx                  # wynik i przyciski
     DialogPanel.tsx           # informacje, hint, analiza, legenda
     EndScreen.tsx            # wygrana / porażka
@@ -74,6 +83,7 @@ src/
     gameUtils.ts             # losowanie, zamiana, status, hint
     game.test.ts             # testy logiki
     computerRoom.test.tsx     # reguły i wspólna prezentacja scenariuszy
+    scenarios.test.tsx       # Substitute, Observation, oceny i konfiguracja UI
     layouts.test.tsx          # geometria, workstation effects, swap i puste miejsca
   styles/game.css
   App.tsx                    # połączenie komponentów i React state
@@ -91,6 +101,6 @@ Vite używa `base: './'`, więc zasoby działają również pod ścieżką `/tea
 
 ## Rozszerzanie
 
-`LevelDefinition` obejmuje classroomLayout, roster, reguły relacji sąsiedzkich i stanowiskowych, opcjonalne modyfikatory hałasu bazowego, opis, progi hałasu, koszt podpowiedzi i ocenianie. Nowy kształt sali można zdefiniować przez dane miejsc, stanowisk i grafu bez zmiany `Classroom.tsx`. Zamiana obsługuje już puste miejsca, ale dostępne scenariusze Normal Lesson i Computer Room używają pełnej klasy. Nowe mechaniki, np. rozmowa przez puste miejsce, wymagają osobnego rozszerzenia zasad i testów.
+`LevelDefinition` obejmuje classroomLayout, roster, reguły relacji sąsiedzkich i stanowiskowych, opcjonalne modyfikatory hałasu bazowego, opis, progi hałasu, koszt podpowiedzi i ocenianie. Nowy kształt sali można zdefiniować przez dane miejsc, stanowisk i grafu bez zmiany `Classroom.tsx`. Zamiana obsługuje już puste miejsca, ale wszystkie cztery dostępne scenariusze używają pełnej klasy. Nowe mechaniki, np. rozmowa przez puste miejsce, wymagają osobnego rozszerzenia zasad i testów.
 
 Następne kroki: (1) zapis najlepszych wyników w localStorage, (2) testy balansu i dopracowanie oprawy, (3) Half Absent z pustymi miejscami, dopiero po ustabilizowaniu Normal Lesson.

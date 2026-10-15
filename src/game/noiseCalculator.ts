@@ -1,8 +1,13 @@
-import type { LevelDefinition, NoiseBreakdown, PairEffect, Student } from './types';
+import type { LevelDefinition, NoiseBreakdown, PairEffect, Student, StudentType } from './types';
 import { relationshipNoise } from './relationships';
 // Keep canonical student data unchanged; apply the current scenario at read time.
 export function getStudentBaseNoise(student: Pick<Student, 'type' | 'baseNoise'>, level: LevelDefinition): number {
   return student.baseNoise + (level.baseNoiseModifiers?.[student.type] ?? 0);
+}
+// Apply once to an existing positive neighbour rule; neutral/helpful pairs stay unchanged.
+export function getNeighbourNoise(first: StudentType, second: StudentType, level: LevelDefinition): number {
+  const noise = relationshipNoise(first, second, level.relationships);
+  return noise > 0 ? noise + (level.positivePairModifier ?? 0) : noise;
 }
 export function calculateNoise(students: readonly Student[], level: LevelDefinition): NoiseBreakdown {
   const layout = level.classroomLayout;
@@ -37,7 +42,7 @@ export function calculateNoise(students: readonly Student[], level: LevelDefinit
     for (const neighbourSeat of neighbours.get(student.seatId) ?? []) {
       const neighbour = bySeat.get(neighbourSeat);
       if (neighbour) addEffect(student, neighbour,
-        relationshipNoise(student.type, neighbour.type, level.relationships), 'neighbourNoise');
+        getNeighbourNoise(student.type, neighbour.type, level), 'neighbourNoise');
     }
   }
 

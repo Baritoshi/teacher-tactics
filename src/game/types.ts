@@ -24,6 +24,7 @@ export interface LevelDefinition {
   id: string; name: string; classroomLayout: ClassroomLayout; targetNoise: number; loseNoise: number;
   description?: string;
   baseNoiseModifiers?: Readonly<Partial<Record<StudentType, number>>>;
+  positivePairModifier?: number;
   hintCost: number; frontRowModifier: number; windowModifier: number;
   roster: readonly Omit<Student, 'seatId'>[]; relationships: readonly RelationshipRule[];
   workstationRelationships?: readonly RelationshipRule[];

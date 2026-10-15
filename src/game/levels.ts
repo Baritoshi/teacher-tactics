@@ -28,4 +28,23 @@ export const COMPUTER_ROOM: LevelDefinition = {
   })),
 };
 
-export const LEVELS: readonly LevelDefinition[] = [NORMAL_LESSON, COMPUTER_ROOM];
+export const SUBSTITUTE_LESSON: LevelDefinition = {
+  ...NORMAL_LESSON,
+  id: 'substitute-lesson', name: 'Substitute Lesson',
+  description: 'The regular teacher is absent. Students are testing the limits, and noisy combinations become even harder to control.',
+  targetNoise: 48, loseNoise: 65, hintCost: 1,
+  baseNoiseModifiers: { Joker: 1, ToughGuy: 1, Troublemaker: 1 },
+  positivePairModifier: 1,
+};
+
+export const LESSON_OBSERVATION: LevelDefinition = {
+  ...NORMAL_LESSON,
+  id: 'lesson-observation', name: 'Lesson Observation',
+  description: 'An observer is present. The classroom must stay especially calm, and every unnecessary move matters.',
+  targetNoise: 40, loseNoise: 55, hintCost: 2,
+  ratings: [ { maxMoves: 3, label: 'Masterclass' }, { maxMoves: 6, label: 'Excellent' },
+    { maxMoves: 9, label: 'Good' }, { maxMoves: 12, label: 'Acceptable' },
+    { maxMoves: 16, label: 'Barely survived' }, { maxMoves: Infinity, label: 'Total teacher exhaustion' } ],
+};
+
+export const LEVELS: readonly LevelDefinition[] = [NORMAL_LESSON, COMPUTER_ROOM, SUBSTITUTE_LESSON, LESSON_OBSERVATION];

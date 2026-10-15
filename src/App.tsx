@@ -1,9 +1,10 @@
+import { LevelSelect } from './components/LevelSelect';
 import { useState } from 'react';
 import { Classroom } from './components/Classroom';
 import { HUD } from './components/HUD';
 import { DialogPanel } from './components/DialogPanel';
 import { EndScreen } from './components/EndScreen';
-import { LEVELS, NORMAL_LESSON } from './game/levels';
+import { NORMAL_LESSON } from './game/levels';
 import type { LevelDefinition } from './game/types';
 import { calculateNoise } from './game/noiseCalculator';
 import { createGame, selectSeat, useHint } from './game/gameUtils';
@@ -21,5 +22,5 @@ function LessonGame({ level, onLevelChange }: { level: LevelDefinition; onLevelC
     else if (action === 'hint') setState(state => useHint(state, level));
     else setState(state => ({ ...state, mode: action }));
   }
-  return <main className="game-shell"><header className="game-header"><a className="brand" href="./"><span className="brand-icon">tt<span>✦</span></span><span>TEACHER TACTICS<small>THE ART OF KEEPING ORDER</small></span></a><div className="lesson-label"><i className="dot green"/><select aria-label="Scenario" value={level.id} onChange={event => { const nextLevel = LEVELS.find(item => item.id === event.target.value); if (nextLevel) onLevelChange(nextLevel); }}>{LEVELS.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><span>{String(LEVELS.indexOf(level) + 1).padStart(2, '0')} / {String(LEVELS.length).padStart(2, '0')}</span></div><span className="edition">SEATING PLAN <span>VOL. 01</span></span></header><div className="page-heading"><div><span className="eyebrow">A LITTLE STRATEGY. A QUIETER CLASSROOM.</span><h1>Every seat makes a difference<span>.</span></h1></div><p>Rearrange the class.<br/>Restore a little calm.</p></div><HUD noise={breakdown.totalNoise} moves={state.moves} level={level} disabled={state.status !== 'playing'} onAction={action}/><Classroom students={state.students} pairs={breakdown.pairs} level={level} selectedId={state.selectedId} disabled={state.status !== 'playing'} onSeat={seat => setState(state => selectSeat(state, seat, level))}/><DialogPanel state={state} breakdown={breakdown} level={level}/><footer className="page-footer"><span>GOOD TEACHING STARTS WITH A GOOD PLAN.</span><span>React + a little classroom chemistry <i>✦</i></span></footer><EndScreen status={state.status} noise={breakdown.totalNoise} moves={state.moves} level={level} onReset={reset}/></main>;
+  return <main className="game-shell"><header className="game-header"><a className="brand" href="./"><span className="brand-icon">tt<span>✦</span></span><span>TEACHER TACTICS<small>THE ART OF KEEPING ORDER</small></span></a><LevelSelect level={level} onChange={onLevelChange}/><span className="edition">SEATING PLAN <span>VOL. 01</span></span></header><div className="page-heading"><div><span className="eyebrow">A LITTLE STRATEGY. A QUIETER CLASSROOM.</span><h1>Every seat makes a difference<span>.</span></h1></div><p>Rearrange the class.<br/>Restore a little calm.</p></div><HUD noise={breakdown.totalNoise} moves={state.moves} level={level} disabled={state.status !== 'playing'} onAction={action}/><Classroom students={state.students} pairs={breakdown.pairs} level={level} selectedId={state.selectedId} disabled={state.status !== 'playing'} onSeat={seat => setState(state => selectSeat(state, seat, level))}/><DialogPanel state={state} breakdown={breakdown} level={level}/><footer className="page-footer"><span>GOOD TEACHING STARTS WITH A GOOD PLAN.</span><span>React + a little classroom chemistry <i>✦</i></span></footer><EndScreen status={state.status} noise={breakdown.totalNoise} moves={state.moves} level={level} onReset={reset}/></main>;
 }

@@ -6,6 +6,6 @@ export function HUD({ noise, moves, level, disabled, onAction }: Props) {
     <div className="stat target"><span className="eyebrow">TARGET</span><strong>≤ {level.targetNoise}</strong><small>the sweet spot</small></div>
     <div className="stat"><span className="eyebrow">LOSE</span><strong>&gt; {level.loseNoise}</strong><small>too much chaos</small></div>
     <div className="stat moves"><span className="eyebrow">MOVES</span><strong>{String(moves).padStart(2, '0')}</strong><small>make them count</small></div>
-    <nav className="actions" aria-label="Game actions"><button disabled={disabled} onClick={() => onAction('hint')}><span>☀</span> Hint <small>+{level.hintCost} move</small></button><button onClick={() => onAction('analysis')}><span>▥</span> Analysis</button><button onClick={() => onAction('legend')}><span>◇</span> Legend</button><button className="reset" onClick={() => onAction('reset')}><span>↻</span> Reset</button></nav>
+    <nav className="actions" aria-label="Game actions"><button disabled={disabled} onClick={() => onAction('hint')}><span>☀</span> Hint <small>+{level.hintCost} {level.hintCost === 1 ? 'move' : 'moves'}</small></button><button onClick={() => onAction('analysis')}><span>▥</span> Analysis</button><button onClick={() => onAction('legend')}><span>◇</span> Legend</button><button className="reset" onClick={() => onAction('reset')}><span>↻</span> Reset</button></nav>
   </section>;
 }

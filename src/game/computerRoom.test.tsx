@@ -18,8 +18,8 @@ const fixtureState: GameState = {
 };
 
 describe('Computer Room configuration', () => {
-  it('registers both scenarios and shares the canonical roster', () => {
-    expect(LEVELS).toEqual([NORMAL_LESSON, COMPUTER_ROOM]);
+  it('registers the original scenarios first and shares the canonical roster', () => {
+    expect(LEVELS.slice(0, 2)).toEqual([NORMAL_LESSON, COMPUTER_ROOM]);
     expect(COMPUTER_ROOM.roster).toBe(NORMAL_ROSTER);
     expect(NORMAL_LESSON.roster).toBe(NORMAL_ROSTER);
     expect(COMPUTER_ROOM).toMatchObject({ targetNoise: 48, loseNoise: 62, hintCost: 1 });
