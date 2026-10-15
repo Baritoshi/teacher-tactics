@@ -2,7 +2,7 @@ import type { LevelDefinition, PairEffect, Student } from '../game/types';
 import { Seat } from './Seat';
 interface Props { students: Student[]; pairs: PairEffect[]; level: LevelDefinition; selectedId: string | null; disabled: boolean; onSeat: (id: number) => void }
 export function Classroom({ students, pairs, level, selectedId, disabled, onSeat }: Props) {
-  const point = (seat: number) => ({ x: (seat % level.columns + .5) * 100, y: (Math.floor(seat / level.columns) + .58) * 100 });
+  const point = (seat: number) => ({ x: (seat % level.columns + .5) * 100, y: (Math.floor(seat / level.columns) + .62) * 100 });
   return <section className="classroom" aria-label="Classroom seating plan">
     <div className="room-top"><div className="board"><span>Today's lesson</span><strong>A little less conversation.</strong><i>More concentration.</i></div><div className="door" aria-hidden="true">EXIT <span>•</span></div></div>
     <div className="teacher-desk" aria-hidden="true"><span className="book"/><span className="mug">☕</span><small>TEACHER</small></div>
