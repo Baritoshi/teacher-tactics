@@ -22,7 +22,7 @@ describe('Computer Room configuration', () => {
     expect(LEVELS).toEqual([NORMAL_LESSON, COMPUTER_ROOM]);
     expect(COMPUTER_ROOM.roster).toBe(NORMAL_ROSTER);
     expect(NORMAL_LESSON.roster).toBe(NORMAL_ROSTER);
-    expect(COMPUTER_ROOM).toMatchObject({ rows: 4, columns: 4, targetNoise: 48, loseNoise: 62, hintCost: 1 });
+    expect(COMPUTER_ROOM).toMatchObject({ targetNoise: 48, loseNoise: 62, hintCost: 1 });
   });
 
   it.each([
@@ -39,9 +39,9 @@ describe('Computer Room configuration', () => {
     const normal = calculateNoise(fixture, NORMAL_LESSON);
     const computer = calculateNoise(fixture, COMPUTER_ROOM);
     expect(normal).toMatchObject({ baseNoise: 10, seatModifiers: -2, pairEffects: 3, totalNoise: 11 });
-    expect(computer).toMatchObject({ baseNoise: 13, seatModifiers: -2, pairEffects: 5, totalNoise: 16 });
+    expect(computer).toMatchObject({ baseNoise: 13, seatModifiers: -2, pairEffects: 5, workstationEffects: 2, totalNoise: 18 });
     expect(computer.pairs).toHaveLength(1);
-    expect(computer.totalNoise).toBe(computer.baseNoise + computer.seatModifiers + computer.pairEffects);
+    expect(computer.totalNoise).toBe(computer.baseNoise + computer.seatModifiers + computer.pairEffects + computer.workstationEffects);
   });
 
   it('leaves all other relationship rules unchanged', () => {
@@ -85,7 +85,7 @@ describe('Computer Room configuration', () => {
   it('uses the configured hint cost and strongest active relationship', () => {
     const hint = useHint(fixtureState, COMPUTER_ROOM);
     expect(hint.moves).toBe(1);
-    expect(hint.message).toContain('Geek + Geek: +5 noise');
+    expect(hint.message).toContain('Geek + Geek: +7 noise');
     expect(hint.students).toBe(fixtureState.students);
     expect(useHint(fixtureState, { ...COMPUTER_ROOM, hintCost: 2 }).moves).toBe(2);
   });
@@ -102,16 +102,16 @@ describe('shared scenario presentation', () => {
     const breakdown = calculateNoise(fixture, COMPUTER_ROOM);
     const html = renderToStaticMarkup(<DialogPanel state={fixtureState} breakdown={breakdown} level={COMPUTER_ROOM} />);
     expect(html).toContain('COMPUTER ROOM · 02');
-    for (const [label, value] of [['Total noise', 16], ['Base noise', 13], ['Seat modifiers', '-2'], ['Pair effects', '+5'], ['Target', '≤ 48'], ['Lose', '&gt; 62']]) {
+    for (const [label, value] of [['Total noise', 18], ['Base noise', 13], ['Seat modifiers', '-2'], ['Neighbour pair effects', '+5'], ['Workstation effects', '+2'], ['Target', '≤ 48'], ['Lose', '&gt; 62']]) {
       expect(html).toContain(`<span>${label}</span><b>${value}</b>`);
     }
   });
 
-  it('draws the calculator pair as +5 with problem rings using the shared Classroom', () => {
+  it('draws the calculator pair as +7 with problem rings using the shared Classroom', () => {
     const breakdown = calculateNoise(fixture, COMPUTER_ROOM);
     const html = renderToStaticMarkup(<Classroom students={fixture} pairs={breakdown.pairs} level={COMPUTER_ROOM} selectedId={null} disabled={false} onSeat={() => {}} />);
-    expect(breakdown.pairs[0].noise).toBe(5);
-    expect(html).toMatch(/<text[^>]*>\+5<\/text>/);
+    expect(breakdown.pairs[0].noise).toBe(7);
+    expect(html).toMatch(/<text[^>]*>\+7<\/text>/);
     expect(html.match(/student-token problem/g)).toHaveLength(2);
     const normal = renderToStaticMarkup(<Classroom students={fixture} pairs={calculateNoise(fixture, NORMAL_LESSON).pairs} level={NORMAL_LESSON} selectedId={null} disabled={false} onSeat={() => {}} />);
     expect(normal).toMatch(/<text[^>]*>\+3<\/text>/);
@@ -121,7 +121,7 @@ describe('shared scenario presentation', () => {
     const breakdown = calculateNoise(fixture, COMPUTER_ROOM);
     const render = (mode: GameState['mode']) => renderToStaticMarkup(<DialogPanel state={{ ...fixtureState, mode, selectedId: fixture[0].id }} breakdown={breakdown} level={COMPUTER_ROOM} />);
     expect(render('student')).toContain('Base noise <b>3</b>');
-    expect(render('student')).toContain('Student 1: +5');
+    expect(render('student')).toContain('Student 1: +7');
     expect(render('legend')).toContain('<b>Geek</b> 3');
     expect(render('legend')).toContain('<b>Troublemaker</b> 7');
     expect(render('legend')).toContain('Geek + Geek +5');

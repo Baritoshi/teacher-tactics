@@ -5,23 +5,54 @@ export function getStudentBaseNoise(student: Pick<Student, 'type' | 'baseNoise'>
   return student.baseNoise + (level.baseNoiseModifiers?.[student.type] ?? 0);
 }
 export function calculateNoise(students: readonly Student[], level: LevelDefinition): NoiseBreakdown {
+  const layout = level.classroomLayout;
   const bySeat = new Map(students.map(student => [student.seatId, student]));
-  const pairs: PairEffect[] = [];
+  const seatDefinitions = new Map(layout.seats.map(seat => [seat.id, seat]));
+  const effects = new Map<string, PairEffect>();
   let baseNoise = 0, seatModifiers = 0;
+
+  function addEffect(first: Student, second: Student, noise: number, source: 'neighbourNoise' | 'workstationNoise') {
+    if (noise === 0) return;
+    const key = [first.seatId, second.seatId].sort((a, b) => a - b).join(':');
+    const pair = effects.get(key) ?? { first, second, noise: 0, neighbourNoise: 0, workstationNoise: 0 };
+    pair[source] += noise;
+    pair.noise += noise;
+    effects.set(key, pair);
+  }
+
+  // Canonicalise graph edges to prevent duplicate/reversed neighbour pairs.
+  const neighbours = new Map<number, number[]>();
+  const seenEdges = new Set<string>();
+  for (const [a, b] of layout.neighbourPairs) {
+    const key = [a, b].sort((x, y) => x - y).join(':');
+    if (a === b || seenEdges.has(key)) continue;
+    seenEdges.add(key);
+    neighbours.set(a, [...(neighbours.get(a) ?? []), b]);
+  }
   for (const student of students) {
     baseNoise += getStudentBaseNoise(student, level);
-    const row = Math.floor(student.seatId / level.columns), col = student.seatId % level.columns;
-    if (row === 0) seatModifiers += level.frontRowModifier;
-    if (col === 0) seatModifiers += level.windowModifier;
-    // Right and down only: no diagonals, wrapping, or duplicate pairs.
-    const neighbours = [col + 1 < level.columns ? bySeat.get(student.seatId + 1) : undefined,
-      row + 1 < level.rows ? bySeat.get(student.seatId + level.columns) : undefined];
-    for (const neighbour of neighbours) {
-      if (!neighbour) continue;
-      const noise = relationshipNoise(student.type, neighbour.type, level.relationships);
-      if (noise !== 0) pairs.push({ first: student, second: neighbour, noise });
+    const seat = seatDefinitions.get(student.seatId);
+    if (seat?.frontRow) seatModifiers += level.frontRowModifier;
+    if (seat?.windowSide) seatModifiers += level.windowModifier;
+    for (const neighbourSeat of neighbours.get(student.seatId) ?? []) {
+      const neighbour = bySeat.get(neighbourSeat);
+      if (neighbour) addEffect(student, neighbour,
+        relationshipNoise(student.type, neighbour.type, level.relationships), 'neighbourNoise');
     }
   }
-  const pairEffects = pairs.reduce((sum, pair) => sum + pair.noise, 0);
-  return { baseNoise, seatModifiers, pairEffects, totalNoise: baseNoise + seatModifiers + pairEffects, pairs };
+
+  const seenWorkstations = new Set<string>();
+  for (const station of layout.workstations) {
+    const key = [station.seatA, station.seatB].sort((a, b) => a - b).join(':');
+    if (station.seatA === station.seatB || seenWorkstations.has(key)) continue;
+    seenWorkstations.add(key);
+    const first = bySeat.get(station.seatA), second = bySeat.get(station.seatB);
+    if (first && second) addEffect(first, second,
+      relationshipNoise(first.type, second.type, level.workstationRelationships ?? []), 'workstationNoise');
+  }
+  const pairs = [...effects.values()];
+  const pairEffects = pairs.reduce((sum, pair) => sum + pair.neighbourNoise, 0);
+  const workstationEffects = pairs.reduce((sum, pair) => sum + pair.workstationNoise, 0);
+  return { baseNoise, seatModifiers, pairEffects, workstationEffects,
+    totalNoise: baseNoise + seatModifiers + pairEffects + workstationEffects, pairs };
 }

@@ -13,7 +13,7 @@ export function swapSeats(students: readonly Student[], firstId: string, targetS
     : student.seatId === targetSeat ? { ...student, seatId: first.seatId } : student);
 }
 function shuffledStudents(level: LevelDefinition): Student[] {
-  const seats = Array.from({ length: level.rows * level.columns }, (_, i) => i);
+  const seats = level.classroomLayout.seats.map(seat => seat.id);
   for (let i = seats.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [seats[i], seats[j]] = [seats[j], seats[i]];
@@ -21,6 +21,7 @@ function shuffledStudents(level: LevelDefinition): Student[] {
   return level.roster.map((student, i) => ({ ...student, seatId: seats[i] }));
 }
 export function createGame(level: LevelDefinition): GameState {
+  if (level.roster.length > level.classroomLayout.seats.length) throw new Error('The roster exceeds the available seats.');
   // Rejection sampling avoids a lesson that is already won/lost on arrival.
   for (let attempt = 0; attempt < 2000; attempt++) {
     const students = shuffledStudents(level);
@@ -32,6 +33,7 @@ export function createGame(level: LevelDefinition): GameState {
 }
 export function selectSeat(state: GameState, seatId: number, level: LevelDefinition): GameState {
   if (state.status !== 'playing') return state;
+  if (!level.classroomLayout.seats.some(seat => seat.id === seatId)) return state;
   const clicked = state.students.find(student => student.seatId === seatId);
   if (!state.selectedId) return clicked ? { ...state, selectedId: clicked.id, mode: 'student' } : state;
   if (clicked?.id === state.selectedId) return { ...state, selectedId: null, mode: 'welcome' };
@@ -44,7 +46,7 @@ export function selectSeat(state: GameState, seatId: number, level: LevelDefinit
 export function useHint(state: GameState, level: LevelDefinition): GameState {
   if (state.status !== 'playing') return state;
   const pair = calculateNoise(state.students, level).pairs.filter(pair => pair.noise > 0).sort((a, b) => b.noise - a.noise)[0];
-  const message = pair ? `Separate ${pair.first.name} and ${pair.second.name}.\n${pair.first.type} + ${pair.second.type}: +${pair.noise} noise.`
+  const message = pair ? `Separate ${pair.first.name} and ${pair.second.name}.\n${pair.first.type} + ${pair.second.type}: +${pair.noise} noise.${pair.workstationNoise ? ` Neighbours: +${pair.neighbourNoise}; workstation: +${pair.workstationNoise}.` : ''}`
     : 'No problematic neighbours remain. Try moving louder students to the front, or seating a Nerd beside a Quiet student.';
   return { ...state, moves: state.moves + level.hintCost, mode: 'hint', message, selectedId: null };
 }

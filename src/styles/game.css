@@ -11,3 +11,42 @@
 
 .lesson-label select{font:inherit;letter-spacing:inherit;text-transform:uppercase;color:inherit;border:0;background:transparent;cursor:pointer;max-width:155px;padding:2px 4px}.lesson-label select:focus-visible{outline:2px solid #287c77;outline-offset:3px;border-radius:3px}
 @media(max-width:650px){.lesson-label select{max-width:105px;padding:2px 0}}
+
+/* All layouts place individual seats in the same normalised coordinate space. */
+.seating > .seat { position: absolute; }
+.layout-computerUShape .seating { left: 7%; right: 7%; top: 135px; bottom: 42px; }
+.computer-workstation { position: absolute; transform: translate(-50%, -50%); width: 15%; height: 13%; background: #c8b28a; border: 1px solid #aa9169; border-radius: 5px; box-shadow: 0 3px 0 #bca680; pointer-events: none; }
+.computer-workstation.facing-left, .computer-workstation.facing-right { width: 6%; height: 39%; }
+.computer-monitor { position: absolute; display: block; width: 26%; height: 55%; left: 37%; bottom: 7%; background: #344e4c; border: 2px solid #526762; border-radius: 3px; }
+.computer-monitor i { position: absolute; inset: 2px; background: #91c3b6; border-bottom: 2px solid #6ca899; }
+.computer-keyboard { position: absolute; width: 21%; height: 10%; left: 39.5%; top: 13%; background: #eeeadd; border-radius: 1px; }
+.computer-number { position: absolute; right: 5%; bottom: 8%; font-size: 6px; color: #827253; letter-spacing: 1px; }
+.facing-left .computer-monitor, .facing-right .computer-monitor { width: 27%; height: 36%; top: 32%; bottom: auto; }
+.facing-left .computer-monitor { left: 8%; }
+.facing-right .computer-monitor { left: auto; right: 8%; }
+.facing-left .computer-keyboard, .facing-right .computer-keyboard { width: 9%; height: 23%; top: 38.5%; left: auto; }
+.facing-left .computer-keyboard { right: 14%; }
+.facing-right .computer-keyboard { left: 14%; }
+.facing-left .computer-number, .facing-right .computer-number { bottom: 5%; right: 10%; font-size: 5px; }
+.computer-seat .student-name { top: -5%; font-size: 9px; white-space: nowrap; }
+.computer-seat .student-type, .computer-seat .seat-number { display: none; }
+.computer-seat .student-token { width: 22px; height: 22px; }
+.computer-seat .student-token::after { content: ''; position: absolute; width: 0; height: 0; border: 3px solid transparent; }
+.computer-seat.facing-left .student-token::after { right: calc(100% + 4px); border-right-color: #48675c; }
+.computer-seat.facing-right .student-token::after { left: calc(100% + 4px); border-left-color: #48675c; }
+.computer-seat.facing-down .student-token::after { top: calc(100% + 4px); border-top-color: #48675c; }
+.computer-seat.facing-up .student-token::after { bottom: calc(100% + 4px); border-bottom-color: #48675c; }
+.line-workstation line { stroke-dasharray: none; stroke-width: 2.2; }
+.analysis-grid.has-workstations { grid-template-columns: repeat(7, 1fr); }
+@media(min-width:900px) and (min-aspect-ratio:4/3) {
+  .layout-computerUShape .seating { top: 110px; bottom: 40px; }
+  .computer-seat .student-name { font-size: 8px; }
+}
+@media(max-width:650px) {
+  .layout-computerUShape .seating { left: 5%; right: 5%; top: 140px; bottom: 45px; }
+  .computer-seat .student-name { font-size: 7px; }
+  .computer-seat .student-token { width: 20px; height: 20px; }
+  .computer-seat.facing-down .student-name { writing-mode: vertical-rl; top: -24px; font-size: 7px; max-height: 38px; }
+  .computer-number { display: none; }
+  .analysis-grid.has-workstations { grid-template-columns: repeat(3, 1fr); }
+}
