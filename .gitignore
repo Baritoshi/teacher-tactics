@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.local-tools/
+.vite/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
