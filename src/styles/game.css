@@ -8,3 +8,6 @@
 
 .student-token{top:62%;transform:translateY(-50%)}
 @media(min-width:900px) and (min-aspect-ratio:4/3){.student-token{top:62%;width:22px;height:22px}.student-type{display:none}.token-face{font-size:8px}}
+
+.lesson-label select{font:inherit;letter-spacing:inherit;text-transform:uppercase;color:inherit;border:0;background:transparent;cursor:pointer;max-width:155px;padding:2px 4px}.lesson-label select:focus-visible{outline:2px solid #287c77;outline-offset:3px;border-radius:3px}
+@media(max-width:650px){.lesson-label select{max-width:105px;padding:2px 0}}

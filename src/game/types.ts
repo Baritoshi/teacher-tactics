@@ -5,6 +5,8 @@ export interface PairEffect { first: Student; second: Student; noise: number }
 export interface RatingBand { maxMoves: number; label: string }
 export interface LevelDefinition {
   id: string; name: string; rows: number; columns: number; targetNoise: number; loseNoise: number;
+  description?: string;
+  baseNoiseModifiers?: Readonly<Partial<Record<StudentType, number>>>;
   hintCost: number; frontRowModifier: number; windowModifier: number;
   roster: readonly Omit<Student, 'seatId'>[]; relationships: readonly RelationshipRule[];
   ratings: readonly RatingBand[];

@@ -29,7 +29,17 @@ Normal Lesson: 4 × 4, 16 uczniów, sześć typów. Kliknij ucznia, potem drugie
 
 Wygrana przy hałasie ≤45, porażka przy >60 (dokładnie 60 nadal pozwala grać). Po zakończeniu ruchy i podpowiedzi są zablokowane. Ocena zależy od liczby ruchów, wliczając podpowiedzi. Losowanie odrzuca układy już zakończone, maksymalnie 2000 prób. Influence i morale są wyświetlane, ale celowo nie wpływają jeszcze na wynik. Stan gry jest w pamięci, bez localStorage na tym etapie.
 
-## Struktura
+## Computer Room
+
+W selektorze **Scenario** u góry wybierz Normal Lesson albo Computer Room. Zmiana scenariusza tworzy nowy losowy układ i zeruje ruchy, zaznaczenie, dialog oraz wynik. Reset i Try Again zachowują wybrany scenariusz. Układ klasy i grafika są wspólne.
+
+Computer Room korzysta z tej samej listy 16 uczniów. Geek otrzymuje +1 hałasu bazowego (2 → 3), Troublemaker +1 (6 → 7), a Geek/Geek daje +5 zamiast +3. Target = 48, lose = 62 (porażka przy >62), hintCost = 1. Oceny, modyfikatory miejsc i pozostałe relacje są takie same jak w Normal Lesson.
+
+Balans zmieniaj wyłącznie w `COMPUTER_ROOM` w `src/game/levels.ts`: `baseNoiseModifiers`, `relationships`, `targetNoise`, `loseNoise`, `hintCost`, `ratings`. Opcjonalne modyfikatory są stosowane przy odczycie przez `getStudentBaseNoise`, bez modyfikowania danych ucznia ani źródłowego rosteru. Analysis, szczegóły ucznia i Legend pokazują wartości aktualnego scenariusza. Linie SVG, ringi i Hint korzystają z par zwróconych przez wspólny kalkulator.
+
+Konfiguracja pozwala później zdefiniować Substitute Lesson i Lesson Observation przez własne relacje, progi, koszt podpowiedzi i oceny. Te scenariusze nie są jeszcze zaimplementowane.
+
+## Struktura plików
 
 ```text
 .github/workflows/deploy.yml  # test, build, GitHub Pages
@@ -65,6 +75,6 @@ Vite używa `base: './'`, więc zasoby działają również pod ścieżką `/tea
 
 ## Rozszerzanie
 
-`LevelDefinition` obejmuje rozmiar siatki, roster, reguły relacji, modyfikatory, progi hałasu, koszt podpowiedzi i ocenianie. Można zmienić te dane bez przepisywania kalkulatora. Zamiana obsługuje już puste miejsca, ale MVP udostępnia tylko pełną klasę Normal Lesson. Nowe mechaniki, np. rozmowa przez puste miejsce, wymagają osobnego rozszerzenia zasad i testów.
+`LevelDefinition` obejmuje rozmiar siatki, roster, reguły relacji, opcjonalne modyfikatory hałasu bazowego, opis, progi hałasu, koszt podpowiedzi i ocenianie. Można zmienić te dane bez przepisywania kalkulatora. Zamiana obsługuje już puste miejsca, ale dostępne scenariusze Normal Lesson i Computer Room używają pełnej klasy. Nowe mechaniki, np. rozmowa przez puste miejsce, wymagają osobnego rozszerzenia zasad i testów.
 
 Następne kroki: (1) zapis najlepszych wyników w localStorage, (2) testy balansu i dopracowanie oprawy, (3) Half Absent z pustymi miejscami, dopiero po ustabilizowaniu Normal Lesson.

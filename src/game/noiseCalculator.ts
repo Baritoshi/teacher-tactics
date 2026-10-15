@@ -1,11 +1,15 @@
 import type { LevelDefinition, NoiseBreakdown, PairEffect, Student } from './types';
 import { relationshipNoise } from './relationships';
+// Keep canonical student data unchanged; apply the current scenario at read time.
+export function getStudentBaseNoise(student: Pick<Student, 'type' | 'baseNoise'>, level: LevelDefinition): number {
+  return student.baseNoise + (level.baseNoiseModifiers?.[student.type] ?? 0);
+}
 export function calculateNoise(students: readonly Student[], level: LevelDefinition): NoiseBreakdown {
   const bySeat = new Map(students.map(student => [student.seatId, student]));
   const pairs: PairEffect[] = [];
   let baseNoise = 0, seatModifiers = 0;
   for (const student of students) {
-    baseNoise += student.baseNoise;
+    baseNoise += getStudentBaseNoise(student, level);
     const row = Math.floor(student.seatId / level.columns), col = student.seatId % level.columns;
     if (row === 0) seatModifiers += level.frontRowModifier;
     if (col === 0) seatModifiers += level.windowModifier;
