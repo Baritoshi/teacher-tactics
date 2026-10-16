@@ -1,63 +1,69 @@
-import type { LevelDefinition, NoiseBreakdown, PairEffect, Student, StudentType } from './types';
+import type { LevelDefinition, NoiseBreakdown, PairEffect, RelationshipEffect, RelationshipSource, Student, StudentType } from './types';
 import { relationshipNoise } from './relationships';
-// Keep canonical student data unchanged; apply the current scenario at read time.
+import { detectSpatialRelations } from './spatial';
+
 export function getStudentBaseNoise(student: Pick<Student, 'type' | 'baseNoise'>, level: LevelDefinition): number {
   return student.baseNoise + (level.baseNoiseModifiers?.[student.type] ?? 0);
 }
-// Apply once to an existing positive neighbour rule; neutral/helpful pairs stay unchanged.
 export function getNeighbourNoise(first: StudentType, second: StudentType, level: LevelDefinition): number {
   const noise = relationshipNoise(first, second, level.relationships);
   return noise > 0 ? noise + (level.positivePairModifier ?? 0) : noise;
 }
+
 export function calculateNoise(students: readonly Student[], level: LevelDefinition): NoiseBreakdown {
-  const layout = level.classroomLayout;
   const bySeat = new Map(students.map(student => [student.seatId, student]));
-  const seatDefinitions = new Map(layout.seats.map(seat => [seat.id, seat]));
-  const effects = new Map<string, PairEffect>();
+  const byId = new Map(students.map(student => [student.id, student]));
+  const seatDefinitions = new Map(level.classroomLayout.seats.map(seat => [seat.id, seat]));
   let baseNoise = 0, seatModifiers = 0;
-
-  function addEffect(first: Student, second: Student, noise: number, source: 'neighbourNoise' | 'workstationNoise') {
-    if (noise === 0) return;
-    const key = [first.seatId, second.seatId].sort((a, b) => a - b).join(':');
-    const pair = effects.get(key) ?? { first, second, noise: 0, neighbourNoise: 0, workstationNoise: 0 };
-    pair[source] += noise;
-    pair.noise += noise;
-    effects.set(key, pair);
-  }
-
-  // Canonicalise graph edges to prevent duplicate/reversed neighbour pairs.
-  const neighbours = new Map<number, number[]>();
-  const seenEdges = new Set<string>();
-  for (const [a, b] of layout.neighbourPairs) {
-    const key = [a, b].sort((x, y) => x - y).join(':');
-    if (a === b || seenEdges.has(key)) continue;
-    seenEdges.add(key);
-    neighbours.set(a, [...(neighbours.get(a) ?? []), b]);
-  }
   for (const student of students) {
     baseNoise += getStudentBaseNoise(student, level);
     const seat = seatDefinitions.get(student.seatId);
     if (seat?.frontRow) seatModifiers += level.frontRowModifier;
     if (seat?.windowSide) seatModifiers += level.windowModifier;
-    for (const neighbourSeat of neighbours.get(student.seatId) ?? []) {
-      const neighbour = bySeat.get(neighbourSeat);
-      if (neighbour) addEffect(student, neighbour,
-        getNeighbourNoise(student.type, neighbour.type, level), 'neighbourNoise');
-    }
   }
 
-  const seenWorkstations = new Set<string>();
-  for (const station of layout.workstations) {
-    const key = [station.seatA, station.seatB].sort((a, b) => a - b).join(':');
-    if (station.seatA === station.seatB || seenWorkstations.has(key)) continue;
-    seenWorkstations.add(key);
-    const first = bySeat.get(station.seatA), second = bySeat.get(station.seatB);
-    if (first && second) addEffect(first, second,
-      relationshipNoise(first.type, second.type, level.workstationRelationships ?? []), 'workstationNoise');
+  const effects: RelationshipEffect[] = [];
+  for (const relation of detectSpatialRelations(students, level.classroomLayout)) {
+    const first = bySeat.get(relation.seatA)!, second = bySeat.get(relation.seatB)!;
+    let noiseDelta: number;
+    let source: RelationshipSource;
+    switch (relation.relationType) {
+      case 'Adjacent':
+        source = 'adjacent';
+        noiseDelta = getNeighbourNoise(first.type, second.type, level);
+        break;
+      case 'GapOne': {
+        source = 'gap-one';
+        const finalPairValue = getNeighbourNoise(first.type, second.type, level);
+        // Only positive final values travel across a gap. Round after all level modifiers.
+        noiseDelta = finalPairValue > 0 ? Math.round(finalPairValue * (level.distantInteractionMultiplier ?? 0)) : 0;
+        break;
+      }
+      case 'SameWorkstation':
+        source = 'workstation';
+        noiseDelta = relationshipNoise(first.type, second.type, level.workstationRelationships ?? []);
+        break;
+    }
+    if (noiseDelta !== 0) effects.push({ studentAId: first.id, studentBId: second.id,
+      relationType: relation.relationType, source, noiseDelta, viaSeatId: relation.viaSeatId });
   }
-  const pairs = [...effects.values()];
-  const pairEffects = pairs.reduce((sum, pair) => sum + pair.neighbourNoise, 0);
-  const workstationEffects = pairs.reduce((sum, pair) => sum + pair.workstationNoise, 0);
-  return { baseNoise, seatModifiers, pairEffects, workstationEffects,
-    totalNoise: baseNoise + seatModifiers + pairEffects + workstationEffects, pairs };
+
+  const sum = (source: RelationshipSource) => effects.filter(effect => effect.source === source).reduce((total, effect) => total + effect.noiseDelta, 0);
+  const adjacentPairEffects = sum('adjacent'), distantPairEffects = sum('gap-one'), workstationEffects = sum('workstation');
+  // One visual per student pair, with explicit source components retained (e.g. 5 + 2).
+  const aggregated = new Map<string, PairEffect>();
+  for (const effect of effects) {
+    const key = JSON.stringify([effect.studentAId, effect.studentBId].sort());
+    const pair = aggregated.get(key) ?? { first: byId.get(effect.studentAId)!, second: byId.get(effect.studentBId)!,
+      noise: 0, neighbourNoise: 0, distantNoise: 0, workstationNoise: 0, effects: [] };
+    pair.effects.push(effect);
+    pair.noise += effect.noiseDelta;
+    if (effect.source === 'adjacent') pair.neighbourNoise += effect.noiseDelta;
+    if (effect.source === 'gap-one') pair.distantNoise += effect.noiseDelta;
+    if (effect.source === 'workstation') pair.workstationNoise += effect.noiseDelta;
+    aggregated.set(key, pair);
+  }
+  return { baseNoise, seatModifiers, adjacentPairEffects, pairEffects: adjacentPairEffects, distantPairEffects, workstationEffects,
+    totalNoise: baseNoise + seatModifiers + adjacentPairEffects + distantPairEffects + workstationEffects,
+    effects, pairs: [...aggregated.values()] };
 }

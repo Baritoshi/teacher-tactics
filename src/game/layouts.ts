@@ -7,7 +7,7 @@ export function createStandardGrid(rows: number, columns: number): ClassroomLayo
     for (let col = 0; col < columns; col++) {
       const id = row * columns + col;
       seats.push({ id, x: col * 100 / columns, y: row * 100 / rows,
-        width: 100 / columns, height: 100 / rows, orientation: 'Up',
+        width: 100 / columns, height: 100 / rows, orientation: 'Up', gridPosition: { row, column: col },
         frontRow: row === 0, windowSide: col === 0 });
       if (col + 1 < columns) neighbourPairs.push([id, id + 1]);
       if (row + 1 < rows) neighbourPairs.push([id, id + columns]);

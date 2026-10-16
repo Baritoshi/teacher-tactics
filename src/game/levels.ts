@@ -47,4 +47,15 @@ export const LESSON_OBSERVATION: LevelDefinition = {
     { maxMoves: 16, label: 'Barely survived' }, { maxMoves: Infinity, label: 'Total teacher exhaustion' } ],
 };
 
-export const LEVELS: readonly LevelDefinition[] = [NORMAL_LESSON, COMPUTER_ROOM, SUBSTITUTE_LESSON, LESSON_OBSERVATION];
+export const HALF_ABSENT: LevelDefinition = {
+  ...NORMAL_LESSON,
+  id: 'half-absent', name: 'Half Absent',
+  description: 'Half the class is missing today. Empty desks give you more room to work with — but some students can still talk across the gaps.',
+  studentCount: 8, targetNoise: 22, loseNoise: 38, hintCost: 1,
+  distantInteractionMultiplier: 0.5,
+  ratings: [ { maxMoves: 2, label: 'Masterclass' }, { maxMoves: 4, label: 'Excellent' },
+    { maxMoves: 6, label: 'Good' }, { maxMoves: 8, label: 'Acceptable' },
+    { maxMoves: 11, label: 'Barely survived' }, { maxMoves: Infinity, label: 'Total teacher exhaustion' } ],
+};
+
+export const LEVELS: readonly LevelDefinition[] = [NORMAL_LESSON, COMPUTER_ROOM, SUBSTITUTE_LESSON, LESSON_OBSERVATION, HALF_ABSENT];

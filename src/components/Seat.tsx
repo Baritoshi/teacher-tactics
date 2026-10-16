@@ -1,9 +1,9 @@
 import { Student } from './Student';
 import type { SeatDefinition, Student as StudentData } from '../game/types';
-interface Props { seat: SeatDefinition; student?: StudentData; selected: boolean; problem: boolean; helpful: boolean; disabled: boolean; onClick: () => void }
-export function Seat({ seat, student, selected, problem, helpful, disabled, onClick }: Props) {
+interface Props { seat: SeatDefinition; student?: StudentData; selected: boolean; legalDestination?: boolean; problem: boolean; helpful: boolean; disabled: boolean; onClick: () => void }
+export function Seat({ seat, student, selected, legalDestination, problem, helpful, disabled, onClick }: Props) {
   const seatId = seat.id;
-  return <button className={`seat ${seat.workstationId ? 'computer-seat' : ''} facing-${seat.orientation.toLowerCase()} ${selected ? 'selected' : ''}`}
+  return <button className={`seat ${seat.workstationId ? 'computer-seat' : ''} facing-${seat.orientation.toLowerCase()} ${selected ? 'selected' : ''} ${!student ? 'is-empty' : ''} ${legalDestination ? 'legal-destination' : ''}`}
     style={{ left: `${seat.x}%`, top: `${seat.y}%`, width: `${seat.width}%`, height: `${seat.height}%` }}
     data-seat={seatId} data-workstation-id={seat.workstationId} data-orientation={seat.orientation}
     aria-label={student ? `${student.name}, ${student.type}, seat ${seatId + 1}` : `Empty seat ${seatId + 1}`}

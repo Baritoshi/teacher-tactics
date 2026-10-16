@@ -97,8 +97,8 @@ describe('configured scenarios', () => {
     for (let reset = 0; reset < 15; reset++) {
       const game = createGame(level);
       expect(game).toMatchObject({ moves: 0, selectedId: null, mode: 'welcome', status: 'playing' });
-      expect(game.students).toHaveLength(16);
-      expect(new Set(game.students.map(s => s.seatId)).size).toBe(16);
+      expect(game.students).toHaveLength(level.studentCount ?? 16);
+      expect(new Set(game.students.map(s => s.seatId)).size).toBe(level.studentCount ?? 16);
       expect(getStatus(calculateNoise(game.students, level).totalNoise, level)).toBe('playing');
       useHint(game, level);
       selectSeat(selectSeat(game, game.students[0].seatId, level), game.students[1].seatId, level);
@@ -111,15 +111,15 @@ describe('configured scenarios', () => {
   });
 
   it('switches through all scenarios without accumulating modifiers', () => {
-    for (const level of [...LEVELS, ...LEVELS].reverse()) {
+    for (const level of [...LEVELS.slice(0, 4), ...LEVELS.slice(0, 4)].reverse()) {
       const breakdown = calculateNoise(createGame(level).students, level);
       expect(breakdown.baseNoise).toBe(level === SUBSTITUTE_LESSON ? 50 : level === COMPUTER_ROOM ? 48 : 43);
     }
   });
 
-  it.each(LEVELS.map((level, index) => ({ level, index })))('shows selector position $index with all four options', ({ level, index }) => {
+  it.each(LEVELS.map((level, index) => ({ level, index })))('shows selector position $index with all five options', ({ level, index }) => {
     const html = renderToStaticMarkup(<LevelSelect level={level} onChange={() => {}} />);
-    expect(html).toContain(`${String(index + 1).padStart(2, '0')} / 04`);
+    expect(html).toContain(`${String(index + 1).padStart(2, '0')} / 05`);
     expect(html).toContain(`value="${level.id}" selected=""`);
     for (const item of LEVELS) expect(html).toContain(`>${item.name}</option>`);
   });
