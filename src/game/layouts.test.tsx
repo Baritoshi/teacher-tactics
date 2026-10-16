@@ -10,8 +10,8 @@ import { Classroom } from '../components/Classroom';
 import { DialogPanel } from '../components/DialogPanel';
 
 const pupil = (type: StudentType, seatId: number): Student => ({
-  id: `s${seatId}`, name: `Student ${seatId}`, type, seatId,
-  baseNoise: STUDENT_TYPES[type].baseNoise, influence: 1, morale: 60,
+  id: `s${seatId}`, name: `Student ${seatId}`, archetypeId: type, seatId,
+  morale: 60,
 });
 
 describe('data-driven classroom layouts', () => {

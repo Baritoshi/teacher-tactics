@@ -10,7 +10,7 @@ import type { GameState, Student, StudentType } from './types';
 import { Classroom } from '../components/Classroom';
 import { DialogPanel } from '../components/DialogPanel';
 
-const pupil = (type: StudentType, seatId: number): Student => ({ id: `s${seatId}`, name: `Student ${seatId}`, type, seatId, baseNoise: STUDENT_TYPES[type].baseNoise, influence: 1, morale: 60 });
+const pupil = (type: StudentType, seatId: number): Student => ({ id: `s${seatId}`, name: `Student ${seatId}`, archetypeId: type, seatId, morale: 60 });
 const state = (students: Student[]): GameState => ({ students, moves: 0, selectedId: null, mode: 'analysis', message: '', status: 'playing' });
 const gapEffects = (students: Student[]) => calculateNoise(students, HALF_ABSENT).effects.filter(effect => effect.source === 'gap-one');
 const emptySeats = (students: Student[]) => HALF_ABSENT.classroomLayout.seats.filter(seat => !students.some(student => student.seatId === seat.id));

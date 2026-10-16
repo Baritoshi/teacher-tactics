@@ -6,7 +6,7 @@ Lekka gra logiczna o przesadzaniu uczniów. React + TypeScript + Vite, CSS i SVG
 
 ## Uruchomienie
 
-Wymagane Node.js 22.12+ oraz pnpm 11.25.0 (można zainstalować przez `npm install -g pnpm@11.25.0`).
+Wymagane Node.js 22.13+ oraz pnpm 11.25.0 (można zainstalować przez `npm install -g pnpm@11.25.0`).
 
 ```sh
 pnpm install --frozen-lockfile
@@ -17,6 +17,8 @@ Otwórz adres wypisany przez Vite (zwykle http://127.0.0.1:5173).
 
 ```sh
 pnpm test       # testy reguł i przejść stanu
+pnpm lint       # ESLint; zero warnings
+pnpm exec tsc --noEmit # sam TypeScript
 pnpm build      # TypeScript + produkcyjny katalog dist/
 pnpm preview    # lokalny podgląd produkcyjny
 ```
@@ -27,7 +29,7 @@ Normal Lesson: 4 × 4, 16 uczniów, sześć typów. Kliknij ucznia, potem drugie
 
 `totalNoise = baseNoise + seatModifiers + pairEffects`. Sąsiedztwo tylko pionowe i poziome, każda para raz. Pierwszy rząd: −2 na ucznia, lewa kolumna: +1. Joker/Joker +4, ToughGuy/ToughGuy +5, Troublemaker/Joker +6, Geek/Geek +3, Nerd/Quiet −2. Modyfikatory narożnego miejsca sumują się.
 
-Wygrana przy hałasie ≤45, porażka przy >60 (dokładnie 60 nadal pozwala grać). Po zakończeniu ruchy i podpowiedzi są zablokowane. Ocena zależy od liczby ruchów, wliczając podpowiedzi. Losowanie odrzuca układy już zakończone, maksymalnie 2000 prób. Influence i morale są wyświetlane, ale celowo nie wpływają jeszcze na wynik. Stan gry jest w pamięci, bez localStorage na tym etapie.
+Wygrana przy hałasie ≤45, porażka przy >60 (dokładnie 60 nadal pozwala grać). Po zakończeniu ruchy i podpowiedzi są zablokowane. Ocena zależy od liczby ruchów, wliczając podpowiedzi. Losowanie odrzuca układy już zakończone, maksymalnie 2000 prób. Influence i morale pozostają informacyjne i nie wpływają na wynik. Stan gry jest w pamięci, bez localStorage na tym etapie.
 
 ## Computer Room
 
@@ -111,7 +113,10 @@ src/
     EndScreen.tsx            # wygrana / porażka
   game/
     types.ts                 # Student, LevelDefinition, GameState
-    students.ts              # typy, kolory i roster
+    archetypes.ts            # rejestr statystyk, kolorów, opisów i reguł
+    behaviours.ts           # czyste reguły self effects
+    hints.ts                # wybór problemu z efektów kalkulatora
+    students.ts              # instancje i roster
     relationships.ts         # symetryczne reguły par
     spatial.ts               # Adjacent, GapOne, SameWorkstation
     random.ts                # seeded RNG i shuffle
@@ -134,12 +139,38 @@ src/
 1. Wyślij repozytorium do GitHuba (główna gałąź: `main`).
 2. W repozytorium wybierz **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Push na `main` uruchamia `.github/workflows/deploy.yml`. Można też wybrać **Actions → Deploy to GitHub Pages → Run workflow**.
-4. Workflow instaluje zależności według lockfile, uruchamia testy i build, a następnie publikuje `dist/`. Adres witryny jest w podsumowaniu wdrożenia.
+4. Workflow instaluje zależności według lockfile, uruchamia testy, lint i build, a następnie publikuje `dist/`. Adres witryny jest w podsumowaniu wdrożenia.
 
 Vite używa `base: './'`, więc zasoby działają również pod ścieżką `/teacher-tactics/`. Osobny skrypt deploy nie jest potrzebny. Fonty Google są opcjonalne; bez sieci używane są fonty systemowe.
 
 ## Rozszerzanie
 
-`LevelDefinition` obejmuje classroomLayout, roster, reguły relacji sąsiedzkich i stanowiskowych, opcjonalne modyfikatory hałasu bazowego, opis, progi hałasu, koszt podpowiedzi i ocenianie. Nowy kształt sali można zdefiniować przez dane miejsc, stanowisk i grafu bez zmiany `Classroom.tsx`. Zamiana obsługuje już puste miejsca, ale pierwsze cztery scenariusze używają pełnej klasy, a Half Absent ma 8 uczniów na 16 miejscach. Nowe mechaniki, np. rozmowa przez puste miejsce, wymagają osobnego rozszerzenia zasad i testów.
+`LevelDefinition` obejmuje classroomLayout, roster, reguły relacji sąsiedzkich i stanowiskowych, opcjonalne modyfikatory hałasu bazowego, opis, progi hałasu, koszt podpowiedzi i ocenianie. Nowy kształt sali można zdefiniować przez dane miejsc, stanowisk i grafu bez zmiany `Classroom.tsx`. Zamiana obsługuje już puste miejsca, ale pierwsze cztery scenariusze używają pełnej klasy, a Half Absent ma 8 uczniów na 16 miejscach. Nowe kategorie zachowań wymagają rozszerzenia czystego ewaluatora i testów; istniejące kategorie można łączyć konfiguracją.
 
 Możliwe kolejne kierunki: testy balansu losowanych składów, dopracowanie grafiki i dostępności oraz kolejne reguły przestrzenne oparte na obecnym modelu.
+
+
+## Archetypy i Behaviour Lab
+
+`src/game/archetypes.ts` jest rejestrem `StudentArchetypeDefinition`: id, displayName, shortCode, description, baseNoise, color, influence, traits, behaviourRules. Zachowuje wartości, kolory i opisy sześciu starych archetypów. `StudentInstance` zawiera id, name, archetypeId, seatId oraz opcjonalne relationshipTags/morale. Instancja nie kopiuje statystyk ani reguł. Kalkulator odczytuje definicję i dopiero nakłada modyfikatory levelu. Opcjonalne `LevelDefinition.archetypes` pozwala podać własny rejestr; klucze muszą odpowiadać `definition.id`.
+
+`behaviours.ts` interpretuje dwa rodzaje danych: `seat-condition` (front-row, back-row, middle-row, window) i `adjacent-count` (min/max zajętych sąsiadów). Używa tych samych wykrytych relacji przestrzennych co pary. GapOne nie zwiększa licznika sąsiadów. Reguły mogą wnosić `contribution.noise` i/lub `contribution.engagement`. Nie ma gałęzi po nazwach archetypów. Nowa kombinacja tych warunków wymaga tylko definicji, nowe rodzaje warunków wymagają rozszerzenia ewaluatora.
+
+- Phone Addict: base 2, przód −1, tył +3, okno +1; efekty sumują się.
+- Good Only Alone: base 1, bez zajętych sąsiadów −2, z co najmniej jednym +2 raz.
+- Gossip: base 2; sam archetyp nie tworzy relacji między dowolnymi osobami.
+- Sleeper: base 0, engagement −3 z przodu, −1 w środku, 0 z tyłu. Nie dodaje hałasu sam z siebie; standardowe modyfikatory miejsca nadal obowiązują.
+
+`StudentEffect` zapisuje studentId, ruleId, effectType, noiseDelta, engagementDelta, source, description i opcjonalny hint. Źródłem jest seat-position albo alone-condition. Reguła o tym samym ID jest liczona raz na ucznia. Definicje nie są mutowane.
+
+`LevelDefinition.specificRelationships` wiąże dwa ID uczniów, nie imiona ani archetypy. W Lab Marta i Kasia mają Gossip Partner: Adjacent +8, GapOne +4. Wartości są jawne i nie przechodzą ponownie przez mnożnik zwykłych par. Odwrócone/zdublowane wpisy tego samego typu i tej samej pary są deduplikowane. Różne typy relacji mogą świadomie współistnieć. Efekt zachowuje `relationType` oraz `source: specific-relationship`, dzięki czemu linia GapOne, inspect i hint używają jednej kalkulacji.
+
+Pełny wynik: `baseNoise + seatModifiers + archetypeSeatEffects + adjacentPairEffects + distantPairEffects + specificRelationshipEffects + workstationEffects`. Alias `pairEffects` oznacza wyłącznie adjacent. Nie należy sumować aliasu dodatkowo. `studentContributions` przypisuje połowę każdego współdzielonego efektu obu uczniom; suma ich totalNoise równa się wynikowi klasy. Lista relacji w inspectorze pokazuje pełną wartość pary i wyjaśnia podział.
+
+`EngagementBreakdown` ma base=0, archetypeEffects i total. Analysis pokazuje go tylko wtedy, gdy obecni uczniowie mają reguły engagement. Nie zmienia statusu, ocen ani priorytetu hinta. Hint porównuje największy dodatni sumaryczny self effect z największym problemem pary. Teksty reguł korzystają z placeholderów `{name}`, `{partner}`, `{noise}`; nie trzeba dopisywać nowego archetypu do hinta.
+
+Legend i tokeny generują się z rejestru. Panel ucznia pokazuje bazę, standardowe modyfikatory miejsca, osobiste efekty, relacje, specjalnego partnera oraz całkowity wkład. Dłuższe notatki przewijają się wewnątrz panelu, także klawiaturą; zmiana trybu rozpoczyna panel od góry.
+
+Behaviour Lab znajduje się w osobnej grupie **Experimental** selektora, także w buildzie produkcyjnym. Pięć zwykłych lekcji zachowuje numerację 01/05–05/05 i stare składy. Lab: 12 uczniów, 16 miejsc, target 24, lose >48, hint 1; balans służy testowaniu. `src/game/students.ts` określa skład (pięć nowych osób i siedem dotychczasowych), a `src/game/levels.ts` progi oraz konkretną relację. Half Absent może opcjonalnie ustawić `rosterPool`, z którego losuje studentCount osób; domyślny roster i losowanie nie zmieniły się.
+
+`archetypes.test.tsx` sprawdza wszystkie cztery zachowania, brak mutacji/podwójnego liczenia, relacje po ID mimo zmiany imion, wpływ engagement tylko na breakdown, priorytety hintów, automatyczne renderowanie nowej definicji, inspect, linie, opcjonalny pool, seed/reset Lab oraz sumy wszystkich kategorii i wkładów podczas ruchów. Dotychczasowe testy pięciu lekcji zachowują oczekiwane wyniki; ich fixtures używają teraz archetypeId zamiast skopiowanej bazy. ESLint działa lokalnie i w GitHub Actions.

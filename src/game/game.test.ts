@@ -3,9 +3,9 @@ import { calculateNoise } from './noiseCalculator';
 import { NORMAL_LESSON } from './levels';
 import { createGame, getRating, getStatus, selectSeat, swapSeats, useHint } from './gameUtils';
 import type { GameState, Student, StudentType } from './types';
-import { STUDENT_TYPES } from './students';
+
 import { relationshipNoise, NORMAL_RELATIONSHIPS } from './relationships';
-const student = (type: StudentType, seatId: number, id = `s${seatId}`): Student => ({ id, name: id, type, seatId, baseNoise: STUDENT_TYPES[type].baseNoise, influence: 1, morale: 60 });
+const student = (type: StudentType, seatId: number, id = `s${seatId}`): Student => ({ id, name: id, archetypeId: type, seatId, morale: 60 });
 const state = (students: Student[]): GameState => ({ students, moves: 0, selectedId: null, mode: 'welcome', message: '', status: 'playing' });
 describe('noise rules', () => {
   it.each(NORMAL_RELATIONSHIPS)('applies $types symmetrically', rule => {

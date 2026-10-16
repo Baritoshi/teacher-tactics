@@ -1,5 +1,5 @@
 import type { LevelDefinition } from './types';
-import { NORMAL_ROSTER } from './students';
+import { BEHAVIOUR_ROSTER, NORMAL_ROSTER } from './students';
 import { NORMAL_RELATIONSHIPS } from './relationships';
 import { COMPUTER_U_SHAPE, STANDARD_GRID } from './layouts';
 export const NORMAL_LESSON: LevelDefinition = {
@@ -59,3 +59,16 @@ export const HALF_ABSENT: LevelDefinition = {
 };
 
 export const LEVELS: readonly LevelDefinition[] = [NORMAL_LESSON, COMPUTER_ROOM, SUBSTITUTE_LESSON, LESSON_OBSERVATION, HALF_ABSENT];
+
+export const BEHAVIOUR_LAB: LevelDefinition = {
+  ...NORMAL_LESSON,
+  id: 'behaviour-lab', name: 'Behaviour Lab', experimental: true,
+  description: 'An experimental classroom for testing personal habits, special friendships and engagement. Only noise determines the outcome.',
+  roster: BEHAVIOUR_ROSTER, studentCount: 12, targetNoise: 24, loseNoise: 48,
+  distantInteractionMultiplier: 0.5,
+  specificRelationships: [{ id: 'marta-kasia-gossip', studentAId: 'marta', studentBId: 'kasia', type: 'gossipPartner',
+    displayName: 'Gossip Partner', adjacentNoise: 8, gapOneNoise: 4,
+    hint: 'Separate {name} and {partner}. Their gossip relationship adds +{noise} noise.' }],
+};
+export const EXPERIMENTAL_LEVELS: readonly LevelDefinition[] = [BEHAVIOUR_LAB];
+export const SELECTABLE_LEVELS: readonly LevelDefinition[] = [...LEVELS, ...EXPERIMENTAL_LEVELS];

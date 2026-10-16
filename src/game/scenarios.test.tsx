@@ -11,8 +11,8 @@ import { HUD } from '../components/HUD';
 import { LevelSelect } from '../components/LevelSelect';
 
 const student = (type: StudentType, seatId: number): Student => ({
-  id: `s${seatId}`, name: `Student ${seatId}`, type, seatId,
-  baseNoise: STUDENT_TYPES[type].baseNoise, influence: 1, morale: 60,
+  id: `s${seatId}`, name: `Student ${seatId}`, archetypeId: type, seatId,
+  morale: 60,
 });
 const state = (students: Student[]): GameState => ({ students, moves: 0, selectedId: null, mode: 'analysis', message: '', status: 'playing' });
 
@@ -29,9 +29,9 @@ describe('configured scenarios', () => {
   it.each(Object.keys(STUDENT_TYPES) as StudentType[])('applies Substitute base modifiers only to the specified types: %s', type => {
     const pupil = student(type, 0);
     const extra = ['Joker', 'ToughGuy', 'Troublemaker'].includes(type) ? 1 : 0;
-    expect(getStudentBaseNoise(pupil, SUBSTITUTE_LESSON)).toBe(pupil.baseNoise + extra);
-    expect(getStudentBaseNoise(pupil, LESSON_OBSERVATION)).toBe(pupil.baseNoise);
-    expect(getStudentBaseNoise(pupil, NORMAL_LESSON)).toBe(pupil.baseNoise);
+    expect(getStudentBaseNoise(pupil, SUBSTITUTE_LESSON)).toBe(STUDENT_TYPES[pupil.archetypeId].baseNoise + extra);
+    expect(getStudentBaseNoise(pupil, LESSON_OBSERVATION)).toBe(STUDENT_TYPES[pupil.archetypeId].baseNoise);
+    expect(getStudentBaseNoise(pupil, NORMAL_LESSON)).toBe(STUDENT_TYPES[pupil.archetypeId].baseNoise);
   });
 
   it.each([

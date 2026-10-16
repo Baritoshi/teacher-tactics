@@ -9,8 +9,8 @@ import { DialogPanel } from '../components/DialogPanel';
 import { Classroom } from '../components/Classroom';
 
 const student = (type: StudentType, seatId: number): Student => ({
-  id: `s${seatId}`, name: `Student ${seatId}`, type, seatId,
-  baseNoise: STUDENT_TYPES[type].baseNoise, influence: 1, morale: 60,
+  id: `s${seatId}`, name: `Student ${seatId}`, archetypeId: type, seatId,
+  morale: 60,
 });
 const fixture = [student('Geek', 0), student('Geek', 1), student('Troublemaker', 4)];
 const fixtureState: GameState = {
@@ -32,7 +32,7 @@ describe('Computer Room configuration', () => {
     const pupil = student(type, 0);
     expect(getStudentBaseNoise(pupil, NORMAL_LESSON)).toBe(normal);
     expect(getStudentBaseNoise(pupil, COMPUTER_ROOM)).toBe(computer);
-    expect(pupil.baseNoise).toBe(normal);
+    expect(STUDENT_TYPES[pupil.archetypeId].baseNoise).toBe(normal);
   });
 
   it('counts Geek pairs once as +3 in Normal Lesson and +5 in Computer Room', () => {
